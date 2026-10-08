@@ -153,3 +153,42 @@ ambigüedad. No quedan marcadores `NEEDS CLARIFICATION`.
 - **Estado**: Pendiente de ejecutar — bloqueante solo para la publicación, no
   para continuar con `/speckit-tasks` e implementación (ver spec.md
   Assumptions).
+
+## 9. Comunicación frontend-backend entre orígenes distintos (FR-034..FR-039)
+
+- **Decision**: El frontend MUST llamar siempre al backend por una URL base
+  absoluta leída de una variable de entorno de compilación de Vite
+  (`VITE_API_BASE_URL`, con `import.meta.env.VITE_API_BASE_URL`), en lugar del
+  path relativo `/api/documents` usado hasta ahora (que asume mismo origen o
+  un proxy de desarrollo). El backend FastAPI expone `CORSMiddleware` con una
+  lista explícita de orígenes permitidos por entorno (variable de entorno del
+  backend, p. ej. `ALLOWED_ORIGINS`, separada por comas), permitiendo los
+  métodos `GET, POST, DELETE, OPTIONS` y las cabeceras necesarias (incluida
+  `X-Session-Token`), con soporte de preflight automático de
+  `CORSMiddleware`. Ningún endpoint relaja su propia validación por
+  confiar en el origen ya filtrado por CORS (FR-037).
+- **Rationale**: Es la forma estándar y de menor complejidad de habilitar
+  llamadas de un origen de frontend a un origen de backend distinto sin
+  introducir un proxy inverso ni un servidor intermedio, cumpliendo FR-034,
+  FR-035 y FR-037 con las herramientas ya elegidas (Vite, FastAPI/Starlette).
+  Mantener la URL base y los orígenes permitidos en variables de entorno (sin
+  valores fijos en código) cumple FR-036 y permite reconfigurar domino/puerto
+  por entorno sin recompilar lógica, solo con el build o el despliegue
+  correspondiente.
+- **Alternatives considered**: Proxy inverso único sirviendo frontend y
+  backend bajo el mismo origen (eliminaría la necesidad de CORS, pero
+  contradice explícitamente FR-034/FR-035, que exigen orígenes
+  independientes sin depender de un proxy); configuración runtime de la URL
+  del backend vía archivo de configuración servido aparte (más flexible para
+  un único build multi-entorno, pero añade una pieza de infraestructura no
+  justificada para el volumen bajo/personal de esta iteración — ver
+  Clarifications en `spec.md`, decisión explícita por tiempo de compilación).
+- **Manejo de errores de configuración/disponibilidad (FR-038)**: El cliente
+  del frontend MUST detectar en un único punto (capa de cliente HTTP) los
+  casos de URL base ausente/vacía o inválida (error de configuración, antes
+  de intentar la petición) y de fallo de red/backend inalcanzable (error de
+  conectividad al intentar la petición), y MUST traducir ambos a un mensaje
+  de error comprensible sin intentar enviar el documento a ningún otro
+  servidor (en particular, nunca al servidor que sirve los archivos estáticos
+  del frontend).
+

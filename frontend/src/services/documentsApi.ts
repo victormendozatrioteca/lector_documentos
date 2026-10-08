@@ -2,9 +2,18 @@
  * Cliente de la API del backend (contracts/api.md). Gestiona el
  * `X-Session-Token` para que el backend aplique la regla de un único trabajo
  * activo por sesión (FR-031a).
+ *
+ * El frontend y el backend se sirven desde orígenes distintos en todo
+ * entorno (FR-034, FR-035): toda operación usa una URL base absoluta
+ * resuelta desde `VITE_API_BASE_URL` (variable de entorno de compilación),
+ * nunca una ruta relativa que asuma mismo origen o un proxy (FR-036). Si la
+ * URL base falta o es inválida, o el backend configurado no responde, se
+ * traduce a un error comprensible, sin intentar enviar el documento a
+ * ningún otro servidor, en particular nunca al que sirve los archivos
+ * estáticos del frontend (FR-038).
  */
 
-const BASE_URL = '/api/documents'
+const RUTA_DOCUMENTOS = '/api/documents'
 const SESSION_TOKEN_KEY = 'lector_documentos_session_token'
 
 export type EstadoProcesamiento =
@@ -43,6 +52,63 @@ export class ErrorApi extends Error {
   }
 }
 
+/** Error de configuración (FR-038): la URL base del backend falta o no es
+ * una URL absoluta válida. Se detecta antes de invocar ningún endpoint. */
+function errorConfiguracionBackend(): ErrorApi {
+  return new ErrorApi({
+    codigo: 'backend_no_configurado',
+    mensaje:
+      'No se pudo determinar la dirección del servidor de procesamiento. Contacta con el administrador del sitio.',
+  })
+}
+
+/** Error de conectividad (FR-038): la URL configurada es válida, pero el
+ * backend no respondió (caído, red interrumpida, CORS, etc.). Nunca se
+ * recurre al servidor que sirve los archivos estáticos del frontend como
+ * alternativa. */
+function errorConectividadBackend(): ErrorApi {
+  return new ErrorApi({
+    codigo: 'backend_no_disponible',
+    mensaje:
+      'No se pudo conectar con el servidor de procesamiento. Comprueba tu conexión e inténtalo de nuevo.',
+  })
+}
+
+/** Resuelve la URL base absoluta del backend desde `VITE_API_BASE_URL` en
+ * cada llamada (FR-034, FR-035, FR-036). Lanza `ErrorApi` si falta o no es
+ * una URL absoluta válida, sin intentar ninguna petición de red. */
+function resolverUrlBase(): string {
+  const valor = import.meta.env.VITE_API_BASE_URL
+  if (!valor || valor.trim() === '') {
+    throw errorConfiguracionBackend()
+  }
+  let url: URL
+  try {
+    url = new URL(valor)
+  } catch {
+    throw errorConfiguracionBackend()
+  }
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    throw errorConfiguracionBackend()
+  }
+  return valor.replace(/\/+$/, '')
+}
+
+function construirUrl(ruta: string): string {
+  return `${resolverUrlBase()}${ruta}`
+}
+
+/** Envuelve `fetch` traduciendo cualquier fallo de red/backend inalcanzable
+ * a un error de conectividad comprensible (FR-038). No reintenta ni recurre
+ * a ningún otro servidor. */
+async function peticion(url: string, init?: RequestInit): Promise<Response> {
+  try {
+    return await fetch(url, init)
+  } catch {
+    throw errorConectividadBackend()
+  }
+}
+
 export function obtenerSessionToken(): string | null {
   return sessionStorage.getItem(SESSION_TOKEN_KEY)
 }
@@ -74,7 +140,7 @@ export async function subirDocumento(archivo: File): Promise<DocumentoAceptado> 
     headers['X-Session-Token'] = tokenActual
   }
 
-  const respuesta = await fetch(BASE_URL, {
+  const respuesta = await peticion(construirUrl(RUTA_DOCUMENTOS), {
     method: 'POST',
     headers,
     body: formData,
@@ -102,7 +168,7 @@ export async function subirDocumento(archivo: File): Promise<DocumentoAceptado> 
 }
 
 export async function consultarEstado(jobId: string): Promise<EstadoDocumento> {
-  const respuesta = await fetch(`${BASE_URL}/${jobId}/status`)
+  const respuesta = await peticion(construirUrl(`${RUTA_DOCUMENTOS}/${jobId}/status`))
 
   if (!respuesta.ok) {
     await leerError(respuesta)
@@ -126,11 +192,11 @@ export async function consultarEstado(jobId: string): Promise<EstadoDocumento> {
 }
 
 export function urlDeAudio(jobId: string): string {
-  return `${BASE_URL}/${jobId}/audio`
+  return construirUrl(`${RUTA_DOCUMENTOS}/${jobId}/audio`)
 }
 
 export async function cancelarDocumento(jobId: string): Promise<void> {
-  await fetch(`${BASE_URL}/${jobId}`, { method: 'DELETE' })
+  await peticion(construirUrl(`${RUTA_DOCUMENTOS}/${jobId}`), { method: 'DELETE' })
 }
 
 const INTERVALO_SONDEO_MS = 1500

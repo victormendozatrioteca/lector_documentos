@@ -26,6 +26,24 @@ uv sync
 uv run uvicorn lector_documentos.main:app --reload
 ```
 
+## CORS: orígenes del frontend autorizados
+
+El frontend se sirve desde un origen distinto al del backend, sin proxy
+(FR-034, FR-035). Antes de arrancar, define `ALLOWED_ORIGINS` con la lista de
+orígenes de frontend autorizados (separados por comas, sin espacios, sin
+valores fijos en el código — FR-036/FR-037):
+
+```bash
+export ALLOWED_ORIGINS="http://localhost:5173"
+# varios orígenes: "https://app.ejemplo.com,http://localhost:5173"
+```
+
+Si `ALLOWED_ORIGINS` falta o está vacía, no se permite ningún origen
+(fail-closed). CORS solo controla qué orígenes puede leer el navegador; cada
+endpoint sigue validando sus propias reglas (formato, tamaño, sesión) con
+independencia del origen de la petición.
+
+
 ## Comandos de control de calidad
 
 Ejecutar antes de cada commit o pull request:

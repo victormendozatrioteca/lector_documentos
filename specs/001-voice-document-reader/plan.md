@@ -55,7 +55,12 @@ el uso bajo/personal.
 modelo (sin llamadas a proveedores TTS externos); límite estricto de archivo de
 5.000.000 bytes aplicado durante la carga (no cargar un fichero ilimitado en
 memoria); sin autorreproducción; un único audio puede sonar a la vez; sin
-persistencia permanente; logs sin contenido de documentos ni credenciales.
+persistencia permanente; logs sin contenido de documentos ni credenciales;
+frontend y backend MUST ejecutarse en orígenes distintos sin proxy, con la URL
+base del backend configurable por entorno vía `VITE_API_BASE_URL` (tiempo de
+compilación) y CORS restringido por entorno a los orígenes de frontend
+autorizados (`ALLOWED_ORIGINS`), sin que CORS sustituya la validación del
+backend (FR-034..FR-039, ver `research.md` §9).
 
 **Scale/Scope**: Uso bajo/personal: 1-5 usuarios simultáneos, procesamiento de
 documentos secuencial (una síntesis Piper a la vez es suficiente; ver
@@ -86,6 +91,7 @@ horizontal en esta iteración.
 | Responsabilidades separadas (carga/validación, conversión Markdown, motor TTS) en módulos pequeños | ✅ PASS | Ver Project Structure (backend/src/services) |
 | Nomenclatura (`snake_case` Python, `camelCase` TS, `PascalCase` componentes) | ✅ PASS | A aplicar en implementación; sin violación de diseño |
 | Validación en backend con códigos HTTP semánticos (400/413/415/503/500) | ✅ PASS | Ver `contracts/api.md` |
+| Estructura simple `/frontend` y `/backend` como servidores independientes (orígenes distintos) | ✅ PASS | FR-034..FR-039; sin proxy ni microservicio intermedio, ver `research.md` §9 y `contracts/api.md` (sección CORS) |
 | Cero código sombra (sin cuentas, pagos, historial, descarga de audio) | ✅ PASS | Confirmado contra Non-Goals de `spec.md` |
 
 No se detectan violaciones que requieran justificación en Complexity Tracking.
@@ -120,7 +126,7 @@ backend/
 │       │   ├── markdown_narration.py  # Conversión Markdown → texto narrable (FR-008..FR-014)
 │       │   ├── tts.py            # Integración Piper (FR-015..FR-019)
 │       │   └── cleanup.py        # Limpieza de temporales (FR-030..FR-031a)
-│       └── main.py
+│       └── main.py               # Monta `CORSMiddleware` con `ALLOWED_ORIGINS` (FR-037)
 ├── models/                       # Recurso de aplicación: pesos Piper descargados (no temporales de usuario)
 │   ├── es_ES-davefx-medium.onnx
 │   └── es_ES-davefx-medium.onnx.json
@@ -131,6 +137,7 @@ backend/
 
 frontend/
 ├── package.json
+├── .env.development / .env.production  # `VITE_API_BASE_URL` por entorno (FR-036)
 ├── src/
 │   ├── components/
 │   │   ├── DocumentUploader.tsx
@@ -138,7 +145,7 @@ frontend/
 │   ├── pages/
 │   │   └── HomePage.tsx
 │   └── services/
-│       └── documentsApi.ts       # Cliente de la API del backend
+│       └── documentsApi.ts       # Cliente de la API; usa `VITE_API_BASE_URL` absoluta (FR-034..FR-038)
 └── tests/
     ├── unit/
     └── integration/
@@ -162,8 +169,13 @@ Ninguna decisión de diseño introduce una nueva necesidad de apartarse de la
 constitución: el formato de audio WAV, el parser `markdown-it-py`, el sondeo
 de estado y la cancelación por sesión son implementaciones concretas de reglas
 ya exigidas (no añaden capas, servicios externos, persistencia ni
-complejidad no justificada). **Resultado: PASS**, sin nuevas entradas en
-Complexity Tracking.
+complejidad no justificada). La comunicación entre orígenes distintos
+(`VITE_API_BASE_URL` + `CORSMiddleware`/`ALLOWED_ORIGINS`, FR-034..FR-039,
+ver `research.md` §9) tampoco introduce una nueva capa: sustituye una ruta
+relativa implícita por una URL absoluta configurable y añade una
+configuración de seguridad estándar del propio framework (FastAPI/Starlette),
+conservando la estructura simple `/frontend` + `/backend`. **Resultado:
+PASS**, sin nuevas entradas en Complexity Tracking.
 
 ## Complexity Tracking
 

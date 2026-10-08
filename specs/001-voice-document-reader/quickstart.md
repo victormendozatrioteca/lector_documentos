@@ -35,6 +35,25 @@ npm run dev
 
 Abrir la URL servida (por defecto `http://localhost:5173`).
 
+### Configurar el origen del backend (FR-036)
+
+El frontend MUST leer la URL base del backend desde una variable de entorno
+de compilación de Vite, no desde una ruta relativa fija. Crear
+`frontend/.env.development` (o `.env.production` para el build de
+producción) con:
+
+```bash
+VITE_API_BASE_URL=http://localhost:8000
+```
+
+El backend MUST declarar los orígenes de frontend autorizados en su propia
+variable de entorno (ver `research.md` §9), por ejemplo:
+
+```bash
+ALLOWED_ORIGINS=http://localhost:5173
+```
+
+
 ## 3. Escenario de validación — User Story 1 (P1): carga y narración
 
 1. Crear un archivo `prueba.md` en UTF-8 con contenido en español que incluya
@@ -90,6 +109,37 @@ Abrir la URL servida (por defecto `http://localhost:5173`).
 2. **Esperado**: el estado del primer trabajo pasa a `cancelado` y sus
    temporales se limpian; el segundo documento se procesa con normalidad.
 
+## 7a. Escenario de validación — User Story 5 (P2): comunicación entre orígenes distintos
+
+1. Servir el frontend (p. ej. `http://localhost:5173`) y el backend (p. ej.
+   `http://localhost:8000`) en puertos distintos, cada uno con su propia
+   variable de entorno (ver sección "Configurar el origen del backend"
+   arriba); confirmar que el frontend no usa ningún proxy de desarrollo hacia
+   el backend.
+2. Repetir el flujo completo de la sección 3 (subir, consultar estado,
+   reproducir con seek en la línea de tiempo) y la cancelación de la sección
+   7.
+   - **Esperado**: todas las operaciones se completan correctamente contra el
+     backend configurado (FR-034, FR-035, SC-008).
+3. Cambiar `VITE_API_BASE_URL` a una segunda URL de backend (por ejemplo, el
+   mismo backend en otro puerto) y reconstruir/relanzar el frontend, sin
+   tocar su código fuente.
+   - **Esperado**: el frontend pasa a usar el nuevo backend configurado
+     (FR-036, SC-009).
+4. Desde un origen de frontend no incluido en `ALLOWED_ORIGINS` del backend
+   (por ejemplo, abriendo la app servida en otro puerto no autorizado, o
+   simulando la petición con `curl -H "Origin: http://evil.example"`),
+   intentar una operación contra el backend.
+   - **Esperado**: el navegador bloquea la respuesta para ese script por
+     política CORS (sin cabecera `Access-Control-Allow-Origin` para ese
+     origen); una petición directa por `curl` confirma que el backend
+     igualmente revalida la petición en servidor (FR-037, SC-010).
+5. Detener el backend o configurar una `VITE_API_BASE_URL` vacía/inválida en
+   el frontend y repetir el intento de subida.
+   - **Esperado**: la interfaz muestra un error comprensible de
+     configuración/conectividad, sin mostrar éxito ni enviar el documento al
+     servidor que sirve el frontend (FR-038).
+
 ## 8. Verificación de privacidad y limpieza
 
 1. Completar una narración y cerrar la pestaña.
@@ -124,11 +174,15 @@ componente):
 | 6.3 | Error `.md` vacío | ✅ `422 sin_contenido_narrable`. |
 | 6.4 | Error motor Piper no disponible | ✅ Validado mediante `backend/tests/contract/test_documents_status_tts_failure.py` (simulación de `piper_disponible=False`): `503 motor_no_disponible`, sin fallback automático a otro proveedor. |
 | 7 | Cancelación por nueva carga | ✅ Al subir un segundo documento en la misma sesión mientras el primero narraba, el primer trabajo pasó a `cancelado` y su directorio temporal se eliminó de inmediato (sin esperar el barrido de 5 min); el segundo documento llegó a `listo` con normalidad. |
+| 7a | US5 — comunicación entre orígenes distintos (CORS) | ✅ Ejecutado el 2026-10-08 (T066-T074) contra un backend real (`uvicorn`, `127.0.0.1:8000`, `ALLOWED_ORIGINS=http://localhost:5173`) y builds reales del frontend (`npm run build` con distintos `VITE_API_BASE_URL`). (1) Flujo completo subida→estado→audio con `Range` y cancelación, todo con `Origin: http://localhost:5173`: cada respuesta incluyó `access-control-allow-origin: http://localhost:5173` (SC-008). (2) Reconstruir el frontend solo cambiando `VITE_API_BASE_URL` (de `:8000` a `:8020`), sin tocar `documentsApi.ts`: el bundle generado referencia la nueva URL (SC-009). (3) Preflight `OPTIONS` con `Origin` autorizado → `200` con `Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS`; con `Origin: http://evil.example` ninguna respuesta (ni siquiera una subida con `202`) incluyó `Access-Control-Allow-Origin`, y el cuerpo siguió validándose en servidor igualmente (SC-010, FR-037). (4) Suites automatizadas: `backend/tests/contract/test_cors_{allowed,unauthorized}_origin.py` (4/4 ✅) y `frontend/tests/unit/apiBaseUrl.test.ts` + `frontend/tests/integration/BackendUnavailable.test.tsx` (7/7 ✅) cubren además URL ausente/inválida y backend inalcanzable sin caer en un fallback al propio servidor del frontend (FR-038). |
 | 8 | Privacidad y limpieza (barrido de expiración) | ✅ Verificado con un trabajo `listo` cuya `creado_en` se forzó a más de 5 minutos de antigüedad: el barrido periódico (`iniciar_barrido_de_expirados`, cada 60 s) eliminó el directorio temporal y la entrada del almacén en memoria. Los logs del servidor solo registran `job_id`, nunca contenido del documento. |
 | 9 | Prueba de escucha | ⏳ Pendiente de un oyente humano (ver T064) — no automatizable por un agente. |
 
 **Conclusión**: todos los escenarios automatizables de User Story 1-4 y las
 reglas transversales (cancelación, privacidad/limpieza) quedan validados de
 extremo a extremo. Queda pendiente, antes de publicar, la prueba de escucha
-humana (T064) y la confirmación final de licencias (T065).
+humana (T064), la confirmación final de licencias (T065), y la nueva User
+Story 5 de comunicación entre orígenes distintos (CORS + URL de backend
+configurable), incorporada después de la implementación inicial y aún sin
+tareas ejecutadas.
 

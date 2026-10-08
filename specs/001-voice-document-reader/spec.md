@@ -14,6 +14,7 @@
 
 - Q: ¿Cuántos usuarios simultáneos debe soportar el servidor como objetivo de diseño para esta primera iteración? → A: Uso bajo/personal: 1-5 usuarios simultáneos, procesamiento secuencial es suficiente.
 - Q: Si un usuario sube un segundo documento mientras el primero todavía se está procesando (antes de poder reproducirse), ¿qué debe hacer el sistema? → A: Cancela el procesamiento anterior y limpia sus archivos temporales, para procesar el nuevo documento.
+- Q: ¿La URL base del backend debe fijarse en tiempo de compilación (un build de frontend por entorno) o debe poder leerse en tiempo de ejecución para que un mismo build sirva en varios entornos? → A: Tiempo de compilación, mediante variable de entorno de Vite (`VITE_API_BASE_URL`); un build de frontend por entorno.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -137,6 +138,47 @@ específico y comprensible sin exponer detalles técnicos internos.
 
 ---
 
+### User Story 5 - Comunicación frontend-backend en orígenes distintos (Priority: P2)
+
+Un usuario accede al frontend servido desde una URL distinta a la del backend (por
+ejemplo, en desarrollo y en producción cada uno corre en su propio servidor/puerto/
+dominio), y espera que toda la aplicación funcione correctamente a través de esa
+comunicación entre orígenes distintos, sin exponerse a errores confusos ni a envíos
+fallidos silenciosos.
+
+**Why this priority**: Es un requisito arquitectónico transversal: si la comunicación
+entre orígenes distintos no funciona o no está correctamente acotada por CORS, ninguna
+operación (US1-US4) puede completarse de forma fiable ni segura, aunque el valor
+narrativo exclusivo del producto ya lo aporten las historias anteriores.
+
+**Independent Test**: Puede probarse desplegando el frontend y el backend en orígenes
+distintos (puertos o dominios diferentes), configurando la URL del backend solo mediante
+variables de entorno, y verificando el flujo completo de subida/estado/cancelación/
+reproducción, el efecto de cambiar esa URL, y el rechazo de peticiones desde un origen no
+autorizado, sin depender de las demás historias.
+
+**Acceptance Scenarios**:
+
+1. **Given** el frontend se sirve desde un origen distinto al del backend, **When** el
+   usuario sube un documento, consulta su estado, lo cancela o reproduce el audio
+   resultante (incluido el desplazamiento en la línea de tiempo), **Then** todas esas
+   operaciones se completan correctamente contra el backend configurado, sin pasar por un
+   proxy del servidor del frontend.
+2. **Given** se cambia la URL base del backend solo mediante configuración de entorno (sin
+   modificar el código fuente del frontend) y se reconstruye/despliega el frontend,
+   **When** el usuario realiza cualquier operación, **Then** la aplicación utiliza el
+   nuevo backend configurado.
+3. **Given** el backend solo autoriza explícitamente ciertos orígenes de frontend por
+   entorno, **When** una petición llega desde un origen no autorizado, **Then** el backend
+   la rechaza mediante su política CORS y la revalida igualmente (CORS no sustituye la
+   validación del backend).
+4. **Given** la URL del backend configurada falta, es inválida, o el backend no está
+   disponible, **When** el usuario intenta cualquier operación, **Then** la interfaz
+   muestra un error comprensible, sin mostrar éxito ni enviar el documento al servidor del
+   frontend como alternativa.
+
+---
+
 ### Edge Cases
 
 - ¿Qué ocurre si el usuario sube un documento `.md` válido pero con codificación distinta
@@ -160,6 +202,18 @@ específico y comprensible sin exponer detalles técnicos internos.
 - ¿Qué ocurre si el usuario sube un segundo documento mientras el primero todavía se está
   procesando? → Se cancela el procesamiento del primer documento, se limpian sus archivos
   temporales, y se procesa el nuevo documento (ver FR-031a).
+- ¿Qué ocurre si la URL base del backend configurada para el frontend falta o es inválida?
+  → La interfaz muestra un error comprensible antes de intentar cualquier operación; no se
+  presenta éxito ni se envían documentos al servidor que sirve el frontend como alternativa
+  (ver FR-034..FR-039).
+- ¿Qué ocurre si el backend configurado no está disponible (caído, inalcanzable o con
+  fallo de red) al subir un documento, consultar su estado, cancelarlo o reproducir el
+  audio? → La interfaz muestra un error comprensible específico de conectividad, sin
+  presentar éxito (ver FR-038).
+- ¿Qué ocurre si el navegador realiza una petición desde un origen del frontend no
+  autorizado explícitamente por el backend? → El backend rechaza la petición mediante la
+  política CORS (no se incluyen las cabeceras de origen permitido), y además revalida la
+  petición igualmente en el backend; CORS no sustituye la validación (ver FR-037).
 
 ## Requirements *(mandatory)*
 
@@ -257,6 +311,34 @@ específico y comprensible sin exponer detalles técnicos internos.
   usuario, sin exponer detalles técnicos internos (trazas, rutas de archivo, nombres de
   librerías, etc.).
 
+**Comunicación frontend-backend (orígenes distintos)**
+
+- **FR-034**: El frontend y el backend MUST ejecutarse como servidores independientes, con
+  URLs de distinto origen (esquema, dominio o puerto), tanto en desarrollo como en
+  producción.
+- **FR-035**: El navegador MUST comunicarse directamente con el backend para todas las
+  operaciones (subida de documentos, consulta de estado, cancelación y reproducción del
+  audio, incluido el desplazamiento —"seek"— en la línea de tiempo), sin depender de un
+  proxy del servidor que sirve el frontend.
+- **FR-036**: La URL base del backend MUST ser configurable por entorno (en el momento en
+  que se produce el build del frontend para ese entorno) sin modificar el código fuente
+  del frontend; un build de frontend por entorno. El sistema MUST NOT fijar dominios ni
+  puertos obligatorios en el código.
+- **FR-037**: El backend MUST permitir, mediante una política CORS, únicamente los
+  orígenes de frontend autorizados explícitamente por entorno, incluyendo los métodos
+  HTTP, cabeceras y comprobaciones previas (preflight `OPTIONS`) necesarios para las
+  operaciones de FR-035. CORS MUST NOT sustituir la validación del backend: toda petición
+  MUST validarse igualmente en el servidor independientemente de su origen.
+- **FR-038**: Si la URL del backend configurada falta, es inválida, o el servicio backend
+  no está disponible, la interfaz MUST mostrar un error comprensible antes de o en lugar de
+  intentar la operación, MUST NOT presentar un estado de éxito, y MUST NOT enviar
+  documentos al servidor que sirve el frontend como alternativa.
+- **FR-039**: El sistema MUST incluir criterios de aceptación/pruebas que verifiquen: (a)
+  el flujo completo de carga y narración funcionando con frontend y backend en orígenes
+  distintos, (b) que cambiar la URL del backend por configuración (sin tocar el código)
+  cambia efectivamente el backend utilizado, y (c) que una petición desde un origen de
+  frontend no autorizado es rechazada por CORS y no se trata como éxito.
+
 ### Key Entities *(include if feature involves data)*
 
 - **Documento**: Representa el archivo Markdown subido por el usuario. Atributos clave:
@@ -294,6 +376,18 @@ específico y comprensible sin exponer detalles técnicos internos.
 - **SC-007**: Ningún usuario puede lograr que suenen dos documentos a la vez, verificado
   mediante pruebas manuales que intentan iniciar una segunda reproducción durante una ya
   activa.
+- **SC-008**: El 100% de las operaciones (subida, consulta de estado, cancelación y
+  reproducción del audio con desplazamiento en la línea de tiempo) se completan
+  correctamente cuando el frontend y el backend se ejecutan en orígenes distintos,
+  verificado mediante una prueba de integración de extremo a extremo entre orígenes
+  distintos.
+- **SC-009**: Cambiar la URL base del backend únicamente mediante configuración de entorno
+  (sin modificar el código fuente del frontend) hace que el 100% de las operaciones
+  posteriores se dirijan al nuevo backend configurado, verificado mediante una prueba
+  automatizada con al menos dos configuraciones distintas.
+- **SC-010**: El 100% de las peticiones realizadas desde un origen de frontend no
+  autorizado explícitamente por el backend son rechazadas por la política CORS del
+  backend, verificado mediante pruebas de contrato que simulan un origen no autorizado.
 
 ## Assumptions
 
@@ -317,3 +411,8 @@ específico y comprensible sin exponer detalles técnicos internos.
   obligaciones de distribución del motor de síntesis (si se redistribuye) se resolverán
   como una tarea de cumplimiento legal antes de publicar, y no condicionan el
   comportamiento funcional descrito en esta especificación.
+- La configuración por entorno de la URL base del backend (FR-036) se implementa mediante
+  la variable de entorno de compilación de Vite `VITE_API_BASE_URL`, leída en el frontend
+  con `import.meta.env`; esto implica generar un build de frontend distinto por entorno en
+  lugar de un único artefacto configurable en tiempo de ejecución (ver Clarifications).
+

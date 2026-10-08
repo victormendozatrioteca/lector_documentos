@@ -95,6 +95,34 @@ la página, FR-031). Limpia inmediatamente los temporales asociados.
 
 **Response**: `204 No Content`.
 
+## Comunicación entre orígenes distintos (CORS)
+
+El frontend y el backend se sirven desde orígenes distintos en todo entorno
+(FR-034). El frontend MUST llamar a una URL base absoluta configurada por
+entorno (`VITE_API_BASE_URL`, ver `research.md` §9), nunca a una ruta relativa
+que asuma mismo origen o un proxy.
+
+- El backend expone `CORSMiddleware` (o equivalente) permitiendo únicamente
+  los orígenes de frontend autorizados explícitamente por entorno (variable
+  de entorno del backend, p. ej. `ALLOWED_ORIGINS`), nunca `*` junto con
+  credenciales/cabeceras sensibles.
+- Métodos permitidos: `GET`, `POST`, `DELETE`, `OPTIONS` (preflight).
+- Cabeceras permitidas: `Content-Type`, `X-Session-Token`.
+- Toda petición entrante MUST revalidarse en el backend (formato, tamaño,
+  sesión, etc.) independientemente de si superó el filtro CORS; CORS es una
+  restricción del navegador, no un mecanismo de autorización del servidor
+  (FR-037).
+- Una petición desde un origen no incluido en `ALLOWED_ORIGINS` no recibe las
+  cabeceras `Access-Control-Allow-Origin` correspondientes; el navegador
+  bloquea la respuesta para scripts de ese origen (comportamiento estándar de
+  CORS, verificable con pruebas de contrato que fijan el header `Origin` de
+  la petición).
+- Si la URL base del backend configurada en el frontend falta, es inválida, o
+  el backend no responde, el frontend MUST mostrar un error comprensible sin
+  llegar a invocar ningún endpoint, o tratando el fallo de red como error de
+  conectividad (nunca como éxito ni como fallback al servidor estático del
+  frontend) (FR-038).
+
 ## Notas de cumplimiento con la constitución
 
 - Ningún endpoint requiere ni acepta claves de proveedores TTS externos.

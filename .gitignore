@@ -32,3 +32,9 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+# Plantillas/documentación de VITE_API_BASE_URL por entorno (FR-036): no
+# contienen secretos, se versionan como referencia (T073). El `.env.production`
+# real (con la URL del despliegue) NO se versiona.
+!.env.development
+!.env.production.example
+

@@ -14,7 +14,7 @@ permitir implementación y prueba independientes de cada una.
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Puede ejecutarse en paralelo (archivo distinto, sin dependencias pendientes)
-- **[Story]**: Historia de usuario a la que pertenece (US1, US2, US3, US4)
+- **[Story]**: Historia de usuario a la que pertenece (US1, US2, US3, US4, US5)
 - Rutas de archivo exactas incluidas en cada descripción
 
 ## Path Conventions
@@ -168,7 +168,32 @@ Web app (ver `plan.md` → Project Structure): `backend/src/`, `backend/tests/`,
 
 ---
 
-## Phase 7: Polish & Cross-Cutting Concerns
+## Phase 7: User Story 5 - Comunicación frontend-backend en orígenes distintos (Priority: P2)
+
+**Goal**: El frontend y el backend se comunican de forma fiable y segura estando en orígenes distintos (sin proxy), con la URL del backend configurable por entorno y el acceso restringido por CORS a los orígenes autorizados, sin que ello sustituya la validación del backend.
+
+**Independent Test**: Servir frontend y backend en puertos distintos configurados solo por variables de entorno; verificar el flujo completo (subida/estado/cancelación/reproducción con seek), el cambio de backend solo por configuración, el rechazo de un origen no autorizado por CORS, y el error comprensible cuando la URL del backend falta/es inválida o el backend no responde (quickstart.md §7a).
+
+### Tests for User Story 5 ⚠️
+
+- [X] T066 [P] [US5] Contract test: a request with an authorized `Origin` header receives `Access-Control-Allow-Origin` for that origin and a successful `OPTIONS` preflight response (FR-037) in `backend/tests/contract/test_cors_allowed_origin.py`
+- [X] T067 [P] [US5] Contract test: a request with an `Origin` header not present in `ALLOWED_ORIGINS` does not receive `Access-Control-Allow-Origin`, and the request body is still independently validated by the backend regardless of CORS outcome (FR-037, SC-010) in `backend/tests/contract/test_cors_unauthorized_origin.py`
+- [X] T068 [P] [US5] Frontend unit test: the API client resolves an absolute base URL from `VITE_API_BASE_URL` (via `import.meta.env`) for every operation (upload, status, cancel, audio), instead of the relative path `/api/documents` (FR-034, FR-035, FR-036) in `frontend/tests/unit/apiBaseUrl.test.ts`
+- [X] T069 [P] [US5] Frontend integration test: when `VITE_API_BASE_URL` is missing/invalid, or the configured backend is unreachable, the UI shows a comprehensible error, never a success state, and never sends the document to the frontend's own server (FR-038) in `frontend/tests/integration/BackendUnavailable.test.tsx`
+
+### Implementation for User Story 5
+
+- [X] T070 [US5] Add `ALLOWED_ORIGINS` environment-based configuration and mount `CORSMiddleware` (methods `GET, POST, DELETE, OPTIONS`; headers `Content-Type, X-Session-Token`) per `contracts/api.md` (FR-037), in `backend/src/lector_documentos/main.py`
+- [X] T071 [P] [US5] Replace the relative `/api/documents` base path with an absolute URL resolved from `VITE_API_BASE_URL` for all operations (FR-034, FR-035, FR-036), in `frontend/src/services/documentsApi.ts`
+- [X] T072 [US5] Detect a missing/invalid configured base URL and network/backend-unavailable failures in the API client, surfacing a comprehensible error (never a fake success, never a fallback to the frontend's own server) (FR-038), depends on T071, in `frontend/src/services/documentsApi.ts`
+- [X] T073 [P] [US5] Add `.env.development` / `.env.production.example` documenting `VITE_API_BASE_URL` per environment (FR-036), in `frontend/`
+- [X] T074 [US5] Execute `quickstart.md` §7a end-to-end (distinct ports, backend URL changed solely via configuration, unauthorized-origin rejection) and record the results (SC-008, SC-009, SC-010), depends on T066-T073, in `specs/001-voice-document-reader/quickstart.md`
+
+**Checkpoint**: Las cinco historias de usuario funcionan de forma independiente; el frontend y el backend pueden desplegarse en orígenes distintos sin proxy.
+
+---
+
+## Phase 8: Polish & Cross-Cutting Concerns
 
 **Purpose**: Mejoras que afectan a varias historias de usuario
 
@@ -188,12 +213,13 @@ Web app (ver `plan.md` → Project Structure): `backend/src/`, `backend/tests/`,
 
 - **Setup (Phase 1)**: Sin dependencias — puede comenzar de inmediato
 - **Foundational (Phase 2)**: Depende de Setup — BLOQUEA todas las historias de usuario
-- **User Stories (Phase 3-6)**: Todas dependen de Foundational
+- **User Stories (Phase 3-7)**: Todas dependen de Foundational
   - US1 (P1) no depende de otras historias
   - US2 (P2) depende de que exista un `AudioPlayer` básico (T029 de US1) para extender sus controles
   - US3 (P2) depende de que exista `markdown_narration.py` (T021 de US1) para extenderlo
   - US4 (P3) depende de la tubería de procesamiento (US1) y de las reglas de omisión (US3, para T055) para detectar "sin contenido narrable"
-- **Polish (Phase 7)**: Depende de que las historias deseadas estén completas
+  - US5 (P2) depende del cliente API (`documentsApi.ts`, T028 de US1) para reemplazar su URL relativa por una absoluta configurable; no depende de US2/US3/US4
+- **Polish (Phase 8)**: Depende de que las historias deseadas estén completas
 
 ### User Story Dependencies
 
@@ -201,6 +227,7 @@ Web app (ver `plan.md` → Project Structure): `backend/src/`, `backend/tests/`,
 - **US2 (P2)**: Extiende el `AudioPlayer` creado en US1; no bloquea ni es bloqueada por US3
 - **US3 (P2)**: Extiende `markdown_narration.py` creado en US1; no bloquea ni es bloqueada por US2
 - **US4 (P3)**: Se apoya en la tubería de US1 y en las reglas de omisión de US3 para la detección de contenido vacío; el resto de validaciones son independientes
+- **US5 (P2)**: Se apoya en el cliente API de US1 (`documentsApi.ts`) y en la app FastAPI de US1 (`main.py`); no bloquea ni es bloqueada por US2/US3/US4 — puede desarrollarse en paralelo a ellas
 
 ### Parallel Opportunities
 
@@ -208,7 +235,8 @@ Web app (ver `plan.md` → Project Structure): `backend/src/`, `backend/tests/`,
 - T007, T009, T012 de Foundational en paralelo (archivos distintos)
 - Todas las pruebas `[P]` de una misma historia (archivos distintos) en paralelo antes de su implementación
 - T021 y T022 (narración y TTS) en paralelo dentro de US1
-- US2 y US3 pueden desarrollarse en paralelo por personas distintas una vez completada US1 (tocan archivos distintos: `AudioPlayer.tsx` vs `markdown_narration.py`)
+- US2, US3 y US5 pueden desarrollarse en paralelo por personas distintas una vez completada US1 (tocan archivos distintos: `AudioPlayer.tsx`, `markdown_narration.py`, `documentsApi.ts`/`main.py`)
+- Dentro de US5, T066-T069 (pruebas) en paralelo; T071 y T073 (frontend) en paralelo entre sí y con T070 (backend, archivo distinto)
 
 ---
 
@@ -245,9 +273,9 @@ Task: "Piper TTS integration in backend/src/lector_documentos/services/tts.py"
 
 1. Setup + Foundational → base lista
 2. Añadir US1 → probar de forma independiente → demo (¡MVP!)
-3. Añadir US2 (controles) y US3 (elementos especiales) en paralelo → probar cada una de forma independiente
+3. Añadir US2 (controles), US3 (elementos especiales) y US5 (orígenes distintos/CORS) en paralelo → probar cada una de forma independiente
 4. Añadir US4 (validación y errores) → probar de forma independiente
-5. Phase 7: Polish, prueba de escucha y validación final de `quickstart.md`
+5. Phase 8: Polish, prueba de escucha y validación final de `quickstart.md`
 
 ### Parallel Team Strategy
 
@@ -255,7 +283,7 @@ Con varios desarrolladores:
 
 1. El equipo completa Setup + Foundational en conjunto
 2. Una persona completa US1 (MVP)
-3. Con US1 lista, dos personas en paralelo: una en US2 (controles de reproducción), otra en US3 (reglas de narración de elementos especiales)
+3. Con US1 lista, personas en paralelo: una en US2 (controles de reproducción), otra en US3 (reglas de narración de elementos especiales), otra en US5 (CORS/URL de backend configurable)
 4. Una persona en US4 una vez que la tubería (US1) y las reglas de omisión (US3) estén disponibles
 
 ---
