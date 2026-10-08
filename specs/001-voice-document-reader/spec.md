@@ -8,6 +8,13 @@
 
 **Input**: User description: "Lector de Documentos con Voz — permitir a un usuario subir un documento Markdown en español y escucharlo narrado en voz alta (español de España) directamente en el navegador, con controles de reproducción (play/pausa, detener, velocidad, línea de tiempo), respetando el orden y fidelidad del contenido narrable, generando el audio en el servidor sin enviar el texto a proveedores externos, y sin conservar documentos ni audios de forma permanente."
 
+## Clarifications
+
+### Session 2026-10-08
+
+- Q: ¿Cuántos usuarios simultáneos debe soportar el servidor como objetivo de diseño para esta primera iteración? → A: Uso bajo/personal: 1-5 usuarios simultáneos, procesamiento secuencial es suficiente.
+- Q: Si un usuario sube un segundo documento mientras el primero todavía se está procesando (antes de poder reproducirse), ¿qué debe hacer el sistema? → A: Cancela el procesamiento anterior y limpia sus archivos temporales, para procesar el nuevo documento.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Subir un documento y escuchar su narración (Priority: P1)
@@ -150,6 +157,9 @@ específico y comprensible sin exponer detalles técnicos internos.
 - ¿Qué ocurre si el usuario cambia la velocidad de reproducción mientras el audio está en
   pausa? → La nueva velocidad se aplica y, al reanudar, continúa desde la misma posición a
   la nueva velocidad.
+- ¿Qué ocurre si el usuario sube un segundo documento mientras el primero todavía se está
+  procesando? → Se cancela el procesamiento del primer documento, se limpian sus archivos
+  temporales, y se procesa el nuevo documento (ver FR-031a).
 
 ## Requirements *(mandatory)*
 
@@ -171,6 +181,10 @@ específico y comprensible sin exponer detalles técnicos internos.
   el proceso.
 - **FR-007**: El backend MUST validar de forma independiente el formato, la codificación,
   el idioma y el tamaño del archivo, aunque el navegador ya los haya validado previamente.
+- **FR-007a**: El sistema MUST soportar al menos 5 usuarios procesando o reproduciendo
+  documentos de forma simultánea sin degradación perceptible, procesando las solicitudes
+  de generación de voz de forma secuencial u otra estrategia equivalente apta para un uso
+  bajo/personal (no se requiere escalado horizontal en esta iteración).
 
 **Reglas de narración**
 
@@ -233,6 +247,10 @@ específico y comprensible sin exponer detalles técnicos internos.
 - **FR-031**: El sistema MUST limpiar los archivos temporales asociados a un documento al
   finalizar su procesamiento, al fallar, al ser cancelado por el usuario o al perderse la
   conexión.
+- **FR-031a**: Si el usuario inicia la carga de un nuevo documento mientras otro de la
+  misma sesión aún se está procesando (generando audio, antes de estar listo para
+  reproducirse), el sistema MUST cancelar el procesamiento anterior, limpiar sus archivos
+  temporales asociados, y comenzar a procesar el nuevo documento.
 - **FR-032**: El sistema MUST NOT incluir el contenido del documento ni credenciales en los
   registros (logs) del sistema.
 - **FR-033**: El sistema MUST mostrar los errores con mensajes comprensibles para el
@@ -287,10 +305,11 @@ específico y comprensible sin exponer detalles técnicos internos.
   por lotes de varios archivos.
 - No se integran proveedores externos de síntesis de voz, pagos, suscripciones ni
   notificaciones.
-- El tiempo máximo de procesamiento aceptable por documento y el dimensionamiento de
-  recursos del servidor se fijan como objetivo operativo en 60 segundos para un documento
-  de 5 MB (ver SC-001); este valor deberá confirmarse con pruebas de carga reales antes de
-  publicar.
+- El tiempo máximo de procesamiento aceptable por documento se fija como objetivo operativo
+  en 60 segundos para un documento de 5 MB (ver SC-001); este valor deberá confirmarse con
+  pruebas de carga reales antes de publicar. El dimensionamiento del servidor se basa en un
+  uso bajo/personal (1-5 usuarios simultáneos, ver Clarifications y FR-007a), sin necesidad
+  de escalado horizontal en esta iteración.
 - La verificación de inteligibilidad de la voz (incluyendo números y siglas) se realizará
   mediante pruebas de escucha manuales antes de publicar; el umbral de aceptación
   propuesto es del 90% de palabras correctamente identificadas (ver SC-003).
