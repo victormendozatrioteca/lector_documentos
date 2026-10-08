@@ -1,0 +1,45 @@
+[project]
+name = "lector-documentos"
+version = "0.1.0"
+description = "Backend del Lector de Documentos con Voz: valida, narra y sintetiza documentos Markdown en español con Piper."
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "fastapi>=0.115,<1.0",
+    "uvicorn[standard]>=0.32,<1.0",
+    "pydantic>=2.9,<3.0",
+    "python-multipart>=0.0.12,<1.0",
+    "markdown-it-py>=3.0,<4.0",
+    "piper-tts>=1.8,<2.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3,<9.0",
+    "pytest-asyncio>=0.24,<1.0",
+    "httpx>=0.27,<1.0",
+    "ruff>=0.7,<1.0",
+    "mypy>=1.13,<2.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lector_documentos"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+disallow_untyped_defs = false

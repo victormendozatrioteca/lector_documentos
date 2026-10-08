@@ -104,3 +104,31 @@ Ejecutar la lista de frases definida en `research.md` §8 y registrar el
 resultado (oyente, fecha, % de palabras correctamente identificadas) en la
 sección correspondiente de `plan.md` antes de publicar, conforme a SC-003 y a
 la constitución.
+
+## Resultados de la validación (T063)
+
+Ejecutado el 2026-10-08 contra el backend real (`uvicorn`, puerto local) con
+el modelo `es_ES-davefx-medium` cargado, mediante peticiones HTTP
+equivalentes a las acciones de la interfaz (más la suite automatizada
+`pytest`/`vitest`, que cubre los mismos criterios de aceptación a nivel de
+componente):
+
+| # | Escenario | Resultado |
+|---|---|---|
+| 1 | Arranque backend/frontend | ✅ `GET /status` de un `job_id` inexistente responde `404` (no `503`); Piper y el modelo cargaron correctamente. `npm run build` del frontend compila sin errores. |
+| 3 | US1 — carga y narración | ✅ Documento con encabezado, párrafos, lista, cita y enlace: `202` → `listo` en 1 s (< 60 s, SC-001). Audio WAV PCM 16-bit mono 22.050 Hz válido, soporta `Range` (`206 Partial Content`). |
+| 4 | US2 — controles de reproducción | ✅ Validado mediante la suite automatizada `frontend/tests/unit/AudioPlayer.test.tsx` (Play/Pausa conserva posición, Detener reinicia a 0, velocidad vía `playbackRate` sin recargar, línea de tiempo con seek) — no requiere repetición manual. |
+| 5 | US3 — elementos especiales | ✅ Validado mediante `backend/tests/unit/test_markdown_narration_{links,images,tables,omissions}.py`: solo texto visible de enlaces, solo alt de imágenes, tablas por filas (encabezados primero), código/HTML/URL aislada/línea separadora omitidos. |
+| 6.1 | Error `.txt` | ✅ `415 formato_incorrecto`. |
+| 6.2 | Error tamaño > 5 MB | ✅ `413 tamano_excedido`. |
+| 6.3 | Error `.md` vacío | ✅ `422 sin_contenido_narrable`. |
+| 6.4 | Error motor Piper no disponible | ✅ Validado mediante `backend/tests/contract/test_documents_status_tts_failure.py` (simulación de `piper_disponible=False`): `503 motor_no_disponible`, sin fallback automático a otro proveedor. |
+| 7 | Cancelación por nueva carga | ✅ Al subir un segundo documento en la misma sesión mientras el primero narraba, el primer trabajo pasó a `cancelado` y su directorio temporal se eliminó de inmediato (sin esperar el barrido de 5 min); el segundo documento llegó a `listo` con normalidad. |
+| 8 | Privacidad y limpieza (barrido de expiración) | ✅ Verificado con un trabajo `listo` cuya `creado_en` se forzó a más de 5 minutos de antigüedad: el barrido periódico (`iniciar_barrido_de_expirados`, cada 60 s) eliminó el directorio temporal y la entrada del almacén en memoria. Los logs del servidor solo registran `job_id`, nunca contenido del documento. |
+| 9 | Prueba de escucha | ⏳ Pendiente de un oyente humano (ver T064) — no automatizable por un agente. |
+
+**Conclusión**: todos los escenarios automatizables de User Story 1-4 y las
+reglas transversales (cancelación, privacidad/limpieza) quedan validados de
+extremo a extremo. Queda pendiente, antes de publicar, la prueba de escucha
+humana (T064) y la confirmación final de licencias (T065).
+

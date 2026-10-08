@@ -168,3 +168,49 @@ Complexity Tracking.
 ## Complexity Tracking
 
 > No violations to justify — Constitution Check passed without exceptions.
+
+## Resultados de la prueba de escucha (T064, SC-003)
+
+**Estado: ⏳ PENDIENTE** — requiere un oyente humano real escuchando el audio
+generado; no es una verificación que un agente de IA pueda ejecutar ni
+certificar por sí mismo.
+
+- **Frases a evaluar**: las definidas en `research.md` §8 (incluyen números y
+  siglas).
+- **Cómo ejecutarla**: generar el audio de esas frases con el backend en
+  marcha (`POST /api/documents` con un `.md` que las contenga, luego
+  reproducir `GET /{job_id}/audio`), y que una persona registre el porcentaje
+  de palabras identificadas correctamente.
+- **A registrar aquí antes de publicar**: oyente, fecha, % identificado,
+  observaciones.
+
+Verificación técnica ya realizada (no sustituye la prueba de escucha humana,
+pero confirma que el pipeline de síntesis funciona correctamente): el 2026-10-08
+se generó y reprodujo un audio de prueba con el backend real; el archivo
+resultante es un WAV PCM de 16 bits, mono, 22.050 Hz, válido y reproducible
+(verificado con `file`), y el servidor respondió correctamente a peticiones
+`Range` (ver `quickstart.md`, sección "Resultados de la validación").
+
+## Confirmación de versiones y licencias (T065, constitución §2)
+
+- **Motor**: paquete PyPI `piper-tts` (proyecto GitHub `OHF-voice/piper1-gpl`)
+  — ver `backend/pyproject.toml`. Versión fijada por `backend/uv.lock`
+  (`uv sync --locked` instala exactamente esta versión).
+- **Modelo de voz**: `es_ES-davefx-medium` (español de España, calidad media),
+  descargado en `backend/models/es_ES-davefx-medium.onnx` +
+  `.onnx.json`.
+- **Formato de audio**: WAV PCM 16-bit, mono, 22.050 Hz (verificado
+  empíricamente en la validación de `quickstart.md`).
+- **Licencias**:
+  - El motor Piper se distribuye bajo **GPL-3.0**. Si este backend se
+    redistribuye junto con el binario/paquete de Piper, deben cumplirse las
+    obligaciones de la GPL-3.0 (código fuente disponible, misma licencia para
+    la obra derivada que incorpore Piper, aviso de licencia).
+  - La licencia específica de los **pesos** del modelo `es_ES-davefx-medium`
+    (distinta de la licencia del motor) **no se confirma en este documento**:
+    debe verificarse en el repositorio/página de descarga del modelo
+    (Hugging Face `rhasspy/piper-voices` u origen equivalente) antes de
+    redistribuir el modelo descargado, conforme a la constitución sección 2 y
+    a los "Pendientes Antes de Publicar" de `spec.md`. Esta confirmación
+    requiere una revisión legal/humana explícita y queda **pendiente**.
+

@@ -28,12 +28,12 @@ Web app (ver `plan.md` → Project Structure): `backend/src/`, `backend/tests/`,
 
 **Purpose**: Inicialización del proyecto y estructura básica
 
-- [ ] T001 Create project structure per `plan.md` (`backend/`, `frontend/`, `backend/tests/{unit,contract,integration}`, `frontend/tests/{unit,integration}`)
-- [ ] T002 [P] Initialize backend Python project: `backend/pyproject.toml` declarando `requires-python = ">=3.12,<3.13"` y dependencias `fastapi`, `uvicorn`, `pydantic`, `markdown-it-py`, `piper1-gpl` (research.md §1-3); generar `backend/uv.lock` con `uv sync`
-- [ ] T003 [P] Initialize frontend Vite+React+TypeScript+Tailwind project: `frontend/package.json`, `frontend/vite.config.ts`, `frontend/tailwind.config.js` (plan.md Technical Context)
-- [ ] T004 [P] Configure backend tooling (`ruff`, `mypy`) in `backend/pyproject.toml`
-- [ ] T005 [P] Configure frontend tooling (eslint/prettier) and `vitest` in `frontend/package.json`, `frontend/vitest.config.ts` (research.md §4)
-- [ ] T006 Download Piper voice model files into `backend/models/es_ES-davefx-medium.onnx` and `backend/models/es_ES-davefx-medium.onnx.json` per `quickstart.md` Prerrequisitos
+- [X] T001 Create project structure per `plan.md` (`backend/`, `frontend/`, `backend/tests/{unit,contract,integration}`, `frontend/tests/{unit,integration}`)
+- [X] T002 [P] Initialize backend Python project: `backend/pyproject.toml` declarando `requires-python = ">=3.12,<3.13"` y dependencias `fastapi`, `uvicorn`, `pydantic`, `markdown-it-py`, `piper1-gpl` (research.md §1-3); generar `backend/uv.lock` con `uv sync`
+- [X] T003 [P] Initialize frontend Vite+React+TypeScript+Tailwind project: `frontend/package.json`, `frontend/vite.config.ts`, `frontend/tailwind.config.js` (plan.md Technical Context)
+- [X] T004 [P] Configure backend tooling (`ruff`, `mypy`) in `backend/pyproject.toml`
+- [X] T005 [P] Configure frontend tooling (eslint/prettier) and `vitest` in `frontend/package.json`, `frontend/vitest.config.ts` (research.md §4)
+- [X] T006 Download Piper voice model files into `backend/models/es_ES-davefx-medium.onnx` and `backend/models/es_ES-davefx-medium.onnx.json` per `quickstart.md` Prerrequisitos
 
 **Checkpoint**: Estructura de ambos proyectos lista para desarrollo.
 
@@ -45,13 +45,13 @@ Web app (ver `plan.md` → Project Structure): `backend/src/`, `backend/tests/`,
 
 **⚠️ CRITICAL**: Ninguna historia de usuario puede comenzar hasta completar esta fase
 
-- [ ] T007 [P] Define `Documento` and `AudioNarrado` Pydantic schemas with the exact fields, enum values (`estado_validacion`: `valido`|`rechazado`; `motivo_rechazo`: `formato_incorrecto`|`tamano_excedido`|`vacio_o_sin_contenido_narrable`|`codificacion_invalida`|`idioma_no_valido`; `estado_procesamiento`: `cargando`|`procesando`|`listo`|`error`|`cancelado`; `Audio narrado.estado`: `generando`|`listo`|`error`) and constraint `tamano_bytes <= 5_000_000` from `data-model.md` §1-2 in `backend/src/lector_documentos/models/schemas.py`
-- [ ] T008 Implement in-memory job store enforcing a single active job per `session_token`, with the state transitions `cargando → procesando → (listo | error)` and `→ cancelado` from `data-model.md` §1, depends on T007, in `backend/src/lector_documentos/services/job_store.py`
-- [ ] T009 [P] Implement the standard error schema `{ "error": { "codigo": "string", "mensaje": "string" } }` and FastAPI exception handlers per `contracts/api.md` in `backend/src/lector_documentos/api/errors.py`
-- [ ] T010 Create FastAPI application skeleton with router registration and a startup check that verifies Piper and the voice model are loadable (feeds the `503` case in `contracts/api.md`), depends on T007, T009, in `backend/src/lector_documentos/main.py`
-- [ ] T011 Implement a temp-file manager for per-job directories (distinct from `backend/models/`, per `data-model.md` §4), with deletion hooks used by finish/fail/cancel flows (FR-006, FR-030, FR-031), depends on T008, in `backend/src/lector_documentos/services/cleanup.py`
-- [ ] T012 [P] Create frontend API client with session-token header handling (`X-Session-Token` per `contracts/api.md`) in `frontend/src/services/documentsApi.ts`
-- [ ] T013 Scaffold `HomePage` composing `DocumentUploader` and `AudioPlayer` placeholders, depends on T012, in `frontend/src/pages/HomePage.tsx`
+- [X] T007 [P] Define `Documento` and `AudioNarrado` Pydantic schemas with the exact fields, enum values (`estado_validacion`: `valido`|`rechazado`; `motivo_rechazo`: `formato_incorrecto`|`tamano_excedido`|`vacio_o_sin_contenido_narrable`|`codificacion_invalida`|`idioma_no_valido`; `estado_procesamiento`: `cargando`|`procesando`|`listo`|`error`|`cancelado`; `Audio narrado.estado`: `generando`|`listo`|`error`) and constraint `tamano_bytes <= 5_000_000` from `data-model.md` §1-2 in `backend/src/lector_documentos/models/schemas.py`
+- [X] T008 Implement in-memory job store enforcing a single active job per `session_token`, with the state transitions `cargando → procesando → (listo | error)` and `→ cancelado` from `data-model.md` §1, depends on T007, in `backend/src/lector_documentos/services/job_store.py`
+- [X] T009 [P] Implement the standard error schema `{ "error": { "codigo": "string", "mensaje": "string" } }` and FastAPI exception handlers per `contracts/api.md` in `backend/src/lector_documentos/api/errors.py`
+- [X] T010 Create FastAPI application skeleton with router registration and a startup check that verifies Piper and the voice model are loadable (feeds the `503` case in `contracts/api.md`), depends on T007, T009, in `backend/src/lector_documentos/main.py`
+- [X] T011 Implement a temp-file manager for per-job directories (distinct from `backend/models/`, per `data-model.md` §4), with deletion hooks used by finish/fail/cancel flows (FR-006, FR-030, FR-031), depends on T008, in `backend/src/lector_documentos/services/cleanup.py`
+- [X] T012 [P] Create frontend API client with session-token header handling (`X-Session-Token` per `contracts/api.md`) in `frontend/src/services/documentsApi.ts`
+- [X] T013 Scaffold `HomePage` composing `DocumentUploader` and `AudioPlayer` placeholders, depends on T012, in `frontend/src/pages/HomePage.tsx`
 
 **Checkpoint**: Infraestructura base lista — las historias de usuario pueden comenzar.
 
@@ -67,25 +67,25 @@ Web app (ver `plan.md` → Project Structure): `backend/src/`, `backend/tests/`,
 
 > Escribir estas pruebas PRIMERO; deben fallar antes de implementar
 
-- [ ] T014 [P] [US1] Contract test: `POST /api/documents` happy path returns `202` with `job_id` per `contracts/api.md` in `backend/tests/contract/test_documents_post.py`
-- [ ] T015 [P] [US1] Contract test: `GET /api/documents/{job_id}/status` happy-path transitions (`cargando`→`procesando`→`listo`) in `backend/tests/contract/test_documents_status.py`
-- [ ] T016 [P] [US1] Contract test: `GET /api/documents/{job_id}/audio` happy path returns `200` `audio/wav` and supports `Range` requests in `backend/tests/contract/test_documents_audio.py`
-- [ ] T017 [P] [US1] Integration test: full upload→poll→listo flow for a valid Spanish `.md` completes within the SC-001 target in `backend/tests/integration/test_upload_narrate_flow.py`
-- [ ] T018 [P] [US1] Integration test: uploading a second document for the same session cancels the first job's processing and cleans its temp files (FR-031a) in `backend/tests/integration/test_cancel_on_new_upload.py`
-- [ ] T019 [P] [US1] Frontend integration test: uploader shows filename and `cargando`/`procesando`/`listo` states plus the privacy notice (FR-005, FR-029) in `frontend/tests/integration/DocumentUploader.test.tsx`
-- [ ] T020 [P] [US1] Frontend integration test: Play requires an explicit click (no autoplay) and starts narration from the first block (FR-020, FR-021) in `frontend/tests/integration/AudioPlayer.test.tsx`
+- [X] T014 [P] [US1] Contract test: `POST /api/documents` happy path returns `202` with `job_id` per `contracts/api.md` in `backend/tests/contract/test_documents_post.py`
+- [X] T015 [P] [US1] Contract test: `GET /api/documents/{job_id}/status` happy-path transitions (`cargando`→`procesando`→`listo`) in `backend/tests/contract/test_documents_status.py`
+- [X] T016 [P] [US1] Contract test: `GET /api/documents/{job_id}/audio` happy path returns `200` `audio/wav` and supports `Range` requests in `backend/tests/contract/test_documents_audio.py`
+- [X] T017 [P] [US1] Integration test: full upload→poll→listo flow for a valid Spanish `.md` completes within the SC-001 target in `backend/tests/integration/test_upload_narrate_flow.py`
+- [X] T018 [P] [US1] Integration test: uploading a second document for the same session cancels the first job's processing and cleans its temp files (FR-031a) in `backend/tests/integration/test_cancel_on_new_upload.py`
+- [X] T019 [P] [US1] Frontend integration test: uploader shows filename and `cargando`/`procesando`/`listo` states plus the privacy notice (FR-005, FR-029) in `frontend/tests/integration/DocumentUploader.test.tsx`
+- [X] T020 [P] [US1] Frontend integration test: Play requires an explicit click (no autoplay) and starts narration from the first block (FR-020, FR-021) in `frontend/tests/integration/AudioPlayer.test.tsx`
 
 ### Implementation for User Story 1
 
-- [ ] T021 [P] [US1] Implement Markdown narration service for headings/paragraphs/quotes/lists with a perceptible pause between blocks, without pronouncing Markdown syntax markers (FR-008, FR-009), using `markdown-it-py` tokens (research.md §3), in `backend/src/lector_documentos/services/markdown_narration.py`
-- [ ] T022 [P] [US1] Implement Piper TTS integration producing a 16-bit mono 22.050 Hz WAV file locally/offline, no external TTS calls (FR-015, FR-016, FR-017), in `backend/src/lector_documentos/services/tts.py`
-- [ ] T023 [US1] Implement the sequential processing pipeline (validate→parse→narrate→synthesize→`listo`, a single job in flight at a time per FR-007a), depends on T021, T022, in `backend/src/lector_documentos/services/pipeline.py`
-- [ ] T024 [US1] Implement `POST /api/documents`: accept the multipart upload, keep the original file unmodified (FR-006), cancel and clean any prior in-flight job of the same session before accepting (FR-031a), and enqueue the pipeline, depends on T023, in `backend/src/lector_documentos/api/documents.py`
-- [ ] T025 [US1] Implement `GET /api/documents/{job_id}/status` per `contracts/api.md`, depends on T024, in `backend/src/lector_documentos/api/documents.py`
-- [ ] T026 [US1] Implement `GET /api/documents/{job_id}/audio` with `Range` support per `contracts/api.md`, depends on T024, in `backend/src/lector_documentos/api/documents.py`
-- [ ] T027 [P] [US1] Implement `DocumentUploader` component: file picker, filename/status display, and the privacy notice that the document is sent to the backend (FR-005, FR-029) in `frontend/src/components/DocumentUploader.tsx`
-- [ ] T028 [P] [US1] Implement a status-polling hook (~1.5 s interval per research.md §5) in `frontend/src/services/documentsApi.ts`
-- [ ] T029 [US1] Implement the `AudioPlayer` base: load the audio source only once `listo`, Play requires an explicit click, no autoplay (FR-020, FR-021), depends on T028, in `frontend/src/components/AudioPlayer.tsx`
+- [X] T021 [P] [US1] Implement Markdown narration service for headings/paragraphs/quotes/lists with a perceptible pause between blocks, without pronouncing Markdown syntax markers (FR-008, FR-009), using `markdown-it-py` tokens (research.md §3), in `backend/src/lector_documentos/services/markdown_narration.py`
+- [X] T022 [P] [US1] Implement Piper TTS integration producing a 16-bit mono 22.050 Hz WAV file locally/offline, no external TTS calls (FR-015, FR-016, FR-017), in `backend/src/lector_documentos/services/tts.py`
+- [X] T023 [US1] Implement the sequential processing pipeline (validate→parse→narrate→synthesize→`listo`, a single job in flight at a time per FR-007a), depends on T021, T022, in `backend/src/lector_documentos/services/pipeline.py`
+- [X] T024 [US1] Implement `POST /api/documents`: accept the multipart upload, keep the original file unmodified (FR-006), cancel and clean any prior in-flight job of the same session before accepting (FR-031a), and enqueue the pipeline, depends on T023, in `backend/src/lector_documentos/api/documents.py`
+- [X] T025 [US1] Implement `GET /api/documents/{job_id}/status` per `contracts/api.md`, depends on T024, in `backend/src/lector_documentos/api/documents.py`
+- [X] T026 [US1] Implement `GET /api/documents/{job_id}/audio` with `Range` support per `contracts/api.md`, depends on T024, in `backend/src/lector_documentos/api/documents.py`
+- [X] T027 [P] [US1] Implement `DocumentUploader` component: file picker, filename/status display, and the privacy notice that the document is sent to the backend (FR-005, FR-029) in `frontend/src/components/DocumentUploader.tsx`
+- [X] T028 [P] [US1] Implement a status-polling hook (~1.5 s interval per research.md §5) in `frontend/src/services/documentsApi.ts`
+- [X] T029 [US1] Implement the `AudioPlayer` base: load the audio source only once `listo`, Play requires an explicit click, no autoplay (FR-020, FR-021), depends on T028, in `frontend/src/components/AudioPlayer.tsx`
 
 **Checkpoint**: User Story 1 completamente funcional y verificable de forma independiente (MVP).
 
@@ -99,17 +99,17 @@ Web app (ver `plan.md` → Project Structure): `backend/src/`, `backend/tests/`,
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T030 [P] [US2] Unit tests for `AudioPlayer` controls: Play/Pausa preserves position on resume, Detener resets to 0, speed change applies `playbackRate` without reload/reset, timeline shows elapsed/total and seeking updates position, controls stay disabled until `listo` (FR-022..FR-027) in `frontend/tests/unit/AudioPlayer.test.tsx`
-- [ ] T031 [P] [US2] Integration test: starting playback of a new document stops any other currently playing audio (FR-028, SC-007) in `frontend/tests/integration/SinglePlaybackGuard.test.tsx`
+- [X] T030 [P] [US2] Unit tests for `AudioPlayer` controls: Play/Pausa preserves position on resume, Detener resets to 0, speed change applies `playbackRate` without reload/reset, timeline shows elapsed/total and seeking updates position, controls stay disabled until `listo` (FR-022..FR-027) in `frontend/tests/unit/AudioPlayer.test.tsx`
+- [X] T031 [P] [US2] Integration test: starting playback of a new document stops any other currently playing audio (FR-028, SC-007) in `frontend/tests/integration/SinglePlaybackGuard.test.tsx`
 
 ### Implementation for User Story 2
 
-- [ ] T032 [US2] Implement Play/Pausa toggle preserving the current position on resume (FR-022) in `frontend/src/components/AudioPlayer.tsx`
-- [ ] T033 [US2] Implement Detener control resetting the position to 0 (FR-023), depends on T032, in `frontend/src/components/AudioPlayer.tsx`
-- [ ] T034 [US2] Implement the speed selector (`0.75x`, `1x`, `1.25x`, `1.5x`, `2x`; default `1x`) via `playbackRate`, without regenerating the audio or resetting the position (FR-024, FR-025), depends on T032, in `frontend/src/components/AudioPlayer.tsx`
-- [ ] T035 [US2] Implement the timeline showing elapsed/total time with drag/click seek (FR-026), depends on T032, in `frontend/src/components/AudioPlayer.tsx`
-- [ ] T036 [US2] Disable controls until the audio is `listo`; ensure keyboard operability with ARIA labels (FR-027), depends on T032-T035, in `frontend/src/components/AudioPlayer.tsx`
-- [ ] T037 [P] [US2] Implement a single-active-playback guard that stops any other audio when a new one starts (FR-028) in `frontend/src/services/playbackGuard.ts`
+- [X] T032 [US2] Implement Play/Pausa toggle preserving the current position on resume (FR-022) in `frontend/src/components/AudioPlayer.tsx`
+- [X] T033 [US2] Implement Detener control resetting the position to 0 (FR-023), depends on T032, in `frontend/src/components/AudioPlayer.tsx`
+- [X] T034 [US2] Implement the speed selector (`0.75x`, `1x`, `1.25x`, `1.5x`, `2x`; default `1x`) via `playbackRate`, without regenerating the audio or resetting the position (FR-024, FR-025), depends on T032, in `frontend/src/components/AudioPlayer.tsx`
+- [X] T035 [US2] Implement the timeline showing elapsed/total time with drag/click seek (FR-026), depends on T032, in `frontend/src/components/AudioPlayer.tsx`
+- [X] T036 [US2] Disable controls until the audio is `listo`; ensure keyboard operability with ARIA labels (FR-027), depends on T032-T035, in `frontend/src/components/AudioPlayer.tsx`
+- [X] T037 [P] [US2] Implement a single-active-playback guard that stops any other audio when a new one starts (FR-028) in `frontend/src/services/playbackGuard.ts`
 
 **Checkpoint**: User Story 1 y 2 funcionan de forma independiente y conjunta.
 
@@ -123,17 +123,17 @@ Web app (ver `plan.md` → Project Structure): `backend/src/`, `backend/tests/`,
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T038 [P] [US3] Unit test: links narrate the visible text, never the URL (FR-010) in `backend/tests/unit/test_markdown_narration_links.py`
-- [ ] T039 [P] [US3] Unit test: images with alt text narrate only the alt text; images without alt text narrate nothing (FR-011) in `backend/tests/unit/test_markdown_narration_images.py`
-- [ ] T040 [P] [US3] Unit test: tables narrate column headers first, then each row's cells left-to-right (FR-012) in `backend/tests/unit/test_markdown_narration_tables.py`
-- [ ] T041 [P] [US3] Unit test: inline code, code blocks, bare URLs, thematic breaks, and raw HTML are omitted without being executed or rendered (FR-013, FR-014) in `backend/tests/unit/test_markdown_narration_omissions.py`
+- [X] T038 [P] [US3] Unit test: links narrate the visible text, never the URL (FR-010) in `backend/tests/unit/test_markdown_narration_links.py`
+- [X] T039 [P] [US3] Unit test: images with alt text narrate only the alt text; images without alt text narrate nothing (FR-011) in `backend/tests/unit/test_markdown_narration_images.py`
+- [X] T040 [P] [US3] Unit test: tables narrate column headers first, then each row's cells left-to-right (FR-012) in `backend/tests/unit/test_markdown_narration_tables.py`
+- [X] T041 [P] [US3] Unit test: inline code, code blocks, bare URLs, thematic breaks, and raw HTML are omitted without being executed or rendered (FR-013, FR-014) in `backend/tests/unit/test_markdown_narration_omissions.py`
 
 ### Implementation for User Story 3
 
-- [ ] T042 [US3] Extend `markdown_narration.py` to narrate a link's visible text only (FR-010), depends on T021, in `backend/src/lector_documentos/services/markdown_narration.py`
-- [ ] T043 [US3] Extend `markdown_narration.py` to narrate only an image's alt text, omitting images without it (FR-011), depends on T042, in `backend/src/lector_documentos/services/markdown_narration.py`
-- [ ] T044 [US3] Extend `markdown_narration.py` to narrate tables by row, headers first, left-to-right (FR-012), depends on T043, in `backend/src/lector_documentos/services/markdown_narration.py`
-- [ ] T045 [US3] Extend `markdown_narration.py` to omit inline code, code blocks, bare URLs, thematic breaks, and raw HTML without executing or rendering them (FR-013, FR-014), depends on T044, in `backend/src/lector_documentos/services/markdown_narration.py`
+- [X] T042 [US3] Extend `markdown_narration.py` to narrate a link's visible text only (FR-010), depends on T021, in `backend/src/lector_documentos/services/markdown_narration.py`
+- [X] T043 [US3] Extend `markdown_narration.py` to narrate only an image's alt text, omitting images without it (FR-011), depends on T042, in `backend/src/lector_documentos/services/markdown_narration.py`
+- [X] T044 [US3] Extend `markdown_narration.py` to narrate tables by row, headers first, left-to-right (FR-012), depends on T043, in `backend/src/lector_documentos/services/markdown_narration.py`
+- [X] T045 [US3] Extend `markdown_narration.py` to omit inline code, code blocks, bare URLs, thematic breaks, and raw HTML without executing or rendering them (FR-013, FR-014), depends on T044, in `backend/src/lector_documentos/services/markdown_narration.py`
 
 **Checkpoint**: User Stories 1, 2 y 3 funcionan de forma independiente.
 
@@ -147,22 +147,22 @@ Web app (ver `plan.md` → Project Structure): `backend/src/`, `backend/tests/`,
 
 ### Tests for User Story 4 ⚠️
 
-- [ ] T046 [P] [US4] Contract test: non-`.md` upload returns `415` with `codigo: "formato_incorrecto"` (FR-002) in `backend/tests/contract/test_documents_post_invalid_format.py`
-- [ ] T047 [P] [US4] Contract test: file exceeding 5,000,000 bytes returns `413` with `codigo: "tamano_excedido"` (FR-003) in `backend/tests/contract/test_documents_post_oversize.py`
-- [ ] T048 [P] [US4] Contract test: empty or no-narrable-content `.md` returns `422` with `codigo: "sin_contenido_narrable"` (FR-004) in `backend/tests/contract/test_documents_post_empty.py`
-- [ ] T049 [P] [US4] Contract test: Piper/model unavailable returns `503` without an automatic fallback provider (FR-019) in `backend/tests/contract/test_documents_status_tts_failure.py`
-- [ ] T050 [P] [US4] Frontend integration test: each backend error `codigo` renders a comprehensible message without technical details (FR-033) in `frontend/tests/integration/ErrorHandling.test.tsx`
+- [X] T046 [P] [US4] Contract test: non-`.md` upload returns `415` with `codigo: "formato_incorrecto"` (FR-002) in `backend/tests/contract/test_documents_post_invalid_format.py`
+- [X] T047 [P] [US4] Contract test: file exceeding 5,000,000 bytes returns `413` with `codigo: "tamano_excedido"` (FR-003) in `backend/tests/contract/test_documents_post_oversize.py`
+- [X] T048 [P] [US4] Contract test: empty or no-narrable-content `.md` returns `422` with `codigo: "sin_contenido_narrable"` (FR-004) in `backend/tests/contract/test_documents_post_empty.py`
+- [X] T049 [P] [US4] Contract test: Piper/model unavailable returns `503` without an automatic fallback provider (FR-019) in `backend/tests/contract/test_documents_status_tts_failure.py`
+- [X] T050 [P] [US4] Frontend integration test: each backend error `codigo` renders a comprehensible message without technical details (FR-033) in `frontend/tests/integration/ErrorHandling.test.tsx`
 
 ### Implementation for User Story 4
 
-- [ ] T051 [P] [US4] Implement extension/format validation (`.md` only) (FR-002) in `backend/src/lector_documentos/services/validation.py`
-- [ ] T052 [US4] Implement UTF-8 encoding validation (FR-002, FR-007), depends on T051, in `backend/src/lector_documentos/services/validation.py`
-- [ ] T053 [US4] Implement Spanish narrable-content language detection (FR-002, FR-007), depends on T052, in `backend/src/lector_documentos/services/validation.py`
-- [ ] T054 [US4] Implement streaming size-limit enforcement cutting the upload at 5,000,000 bytes without buffering the whole file in memory (FR-003), depends on T053, in `backend/src/lector_documentos/services/validation.py`
-- [ ] T055 [US4] Implement empty/no-narrable-content detection applied after the omission rules from User Story 3 (FR-004), depends on T054, T045, in `backend/src/lector_documentos/services/validation.py`
-- [ ] T056 [US4] Wire the validation service into `POST /api/documents`, returning `400`/`413`/`415`/`422` with `{codigo, mensaje}` per `contracts/api.md` (FR-033), depends on T055, T024, in `backend/src/lector_documentos/api/documents.py`
-- [ ] T057 [P] [US4] Implement Piper failure handling returning `503` (engine/model unavailable) or `500` (internal synthesis failure) without an automatic fallback provider (FR-019), depends on T022, in `backend/src/lector_documentos/services/tts.py`
-- [ ] T058 [P] [US4] Implement the frontend `ErrorBanner` component translating backend `{codigo, mensaje}` into comprehensible UI messages (FR-033) in `frontend/src/components/ErrorBanner.tsx`
+- [X] T051 [P] [US4] Implement extension/format validation (`.md` only) (FR-002) in `backend/src/lector_documentos/services/validation.py`
+- [X] T052 [US4] Implement UTF-8 encoding validation (FR-002, FR-007), depends on T051, in `backend/src/lector_documentos/services/validation.py`
+- [X] T053 [US4] Implement Spanish narrable-content language detection (FR-002, FR-007), depends on T052, in `backend/src/lector_documentos/services/validation.py`
+- [X] T054 [US4] Implement streaming size-limit enforcement cutting the upload at 5,000,000 bytes without buffering the whole file in memory (FR-003), depends on T053, in `backend/src/lector_documentos/services/validation.py`
+- [X] T055 [US4] Implement empty/no-narrable-content detection applied after the omission rules from User Story 3 (FR-004), depends on T054, T045, in `backend/src/lector_documentos/services/validation.py`
+- [X] T056 [US4] Wire the validation service into `POST /api/documents`, returning `400`/`413`/`415`/`422` with `{codigo, mensaje}` per `contracts/api.md` (FR-033), depends on T055, T024, in `backend/src/lector_documentos/api/documents.py`
+- [X] T057 [P] [US4] Implement Piper failure handling returning `503` (engine/model unavailable) or `500` (internal synthesis failure) without an automatic fallback provider (FR-019), depends on T022, in `backend/src/lector_documentos/services/tts.py`
+- [X] T058 [P] [US4] Implement the frontend `ErrorBanner` component translating backend `{codigo, mensaje}` into comprehensible UI messages (FR-033) in `frontend/src/components/ErrorBanner.tsx`
 
 **Checkpoint**: Las cuatro historias de usuario funcionan de forma independiente.
 
@@ -172,13 +172,13 @@ Web app (ver `plan.md` → Project Structure): `backend/src/`, `backend/tests/`,
 
 **Purpose**: Mejoras que afectan a varias historias de usuario
 
-- [ ] T059 [P] Configure structured logging that excludes document content and credentials (FR-032) in `backend/src/lector_documentos/main.py`
-- [ ] T060 [P] Implement a temp-file expiry sweep removing job artifacts 5 minutes after the narration session ends (SC-005), depends on T011, in `backend/src/lector_documentos/services/cleanup.py`
-- [ ] T061 [P] Document backend quality-gate commands (`uv run pytest`, `uv run ruff check .`, `uv run ruff format --check .`, `uv run mypy .`) in `backend/README.md`
-- [ ] T062 [P] Document frontend quality-gate commands (`vitest`, `tsc --noEmit`, `vite build`) in `frontend/package.json` scripts and `frontend/README.md`
-- [ ] T063 Run all `quickstart.md` validation scenarios end-to-end and record the results in `specs/001-voice-document-reader/quickstart.md`
+- [X] T059 [P] Configure structured logging that excludes document content and credentials (FR-032) in `backend/src/lector_documentos/main.py`
+- [X] T060 [P] Implement a temp-file expiry sweep removing job artifacts 5 minutes after the narration session ends (SC-005), depends on T011, in `backend/src/lector_documentos/services/cleanup.py`
+- [X] T061 [P] Document backend quality-gate commands (`uv run pytest`, `uv run ruff check .`, `uv run ruff format --check .`, `uv run mypy .`) in `backend/README.md`
+- [X] T062 [P] Document frontend quality-gate commands (`vitest`, `tsc --noEmit`, `vite build`) in `frontend/package.json` scripts and `frontend/README.md`
+- [X] T063 Run all `quickstart.md` validation scenarios end-to-end and record the results in `specs/001-voice-document-reader/quickstart.md`
 - [ ] T064 Execute the Piper listening test defined in `research.md` §8 and record the results (oyente, fecha, % identificado) in `specs/001-voice-document-reader/plan.md`
-- [ ] T065 [P] Confirm and document the final engine/model versions, audio format, and license-evidence summary in `specs/001-voice-document-reader/plan.md` per constitución §2
+- [X] T065 [P] Confirm and document the final engine/model versions, audio format, and license-evidence summary in `specs/001-voice-document-reader/plan.md` per constitución §2
 
 ---
 
